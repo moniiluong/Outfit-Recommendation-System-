@@ -1,0 +1,189 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f8f9fa;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+}
+
+/* Customize Button */
+.customize-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.customize-btn:hover {
+    background-color: #218838;
+}
+
+.weather-header {
+    margin-bottom: 0;
+}
+
+.weather-header h1 {
+    font-size: 2.2em;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.current-temp {
+    font-size: 3.5em;
+    margin: 0;
+    line-height: 1;
+    font-weight: 300;
+    color: #333;
+}
+
+.high-low {
+    font-size: 1.1em;
+    margin-top: 8px;
+    color: #666;
+    font-weight: 400;
+}
+
+/* Avatar Styling */
+.human-figure-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+    border-radius: 20px;
+    background-color: #f1f3f4;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+#avatarContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+#avatarContainer svg {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+}
+
+/* Recommendations */
+.recommendations {
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: left;
+    min-height: 100px;
+    background-color: #fff;
+}
+
+.recommendations h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #333;
+}
+
+.recommendations ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recommendations li {
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+/* Forecast Styling */
+.forecast {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.day p:first-of-type {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.day .weather-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 8px;
+    border-radius: 50%;
+    background-color: #e3f2fd;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.day .day-temp {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+/* Responsive adjustments for very small screens */
+@media (max-width: 380px) {
+    .forecast {
+        gap: 8px;
+    }
+    .day .weather-icon {
+        width: 40px;
+        height: 40px;
+        padding: 6px;
+    }
+    .day p:first-of-type {
+        font-size: 0.8em;
+    }
+    .day .day-temp {
+        font-size: 0.85em;
+    }
+}

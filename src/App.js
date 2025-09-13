@@ -8,8 +8,6 @@ import Forecast from './components/Forecast';
 import AvatarCustomizationModal from './components/AvatarCustomizationModal';
 
 const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
-// const API_KEY = "fee52ab95b7b745652d9a0f57987ffb0";
-console.log(API_KEY)
 const DEFAULT_CITY = 'Raleigh';
 const DEFAULT_LAT = 35.7796;
 const DEFAULT_LON = -78.6382;

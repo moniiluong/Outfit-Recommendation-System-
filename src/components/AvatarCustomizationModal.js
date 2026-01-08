@@ -1,5 +1,6 @@
 // src/components/AvatarCustomizationModal.js
 import React, { useState } from 'react';
+import { modalOverlayStyle, modalContentStyle, buttonStyles } from '../styles/commonStyles';
 
 export default function AvatarCustomizationModal({ baseConfig, onApply, onClose }) {
   const [config, setConfig] = useState({ ...baseConfig });
@@ -14,22 +15,8 @@ export default function AvatarCustomizationModal({ baseConfig, onApply, onClose 
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0, width: '100%', height: '100%',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex', justifyContent: 'center', alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '30px',
-        borderRadius: '15px',
-        maxWidth: '400px',
-        width: '90%',
-        maxHeight: '80vh',
-        overflowY: 'auto'
-      }}>
+    <div style={modalOverlayStyle}>
+      <div style={modalContentStyle}>
         <h3 style={{ marginTop: 0, textAlign: 'center', color: '#333' }}>Customize Your Avatar</h3>
 
         {/* Skin Tone */}
@@ -101,8 +88,8 @@ export default function AvatarCustomizationModal({ baseConfig, onApply, onClose 
         </select>
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-          <button onClick={handleApply} style={{ flex: 1, padding: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '8px' }}>Apply</button>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '8px' }}>Cancel</button>
+          <button onClick={handleApply} style={{ ...buttonStyles.success, flex: 1 }}>Apply</button>
+          <button onClick={onClose} style={{ ...buttonStyles.cancel, flex: 1 }}>Cancel</button>
         </div>
       </div>
     </div>

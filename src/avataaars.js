@@ -32,7 +32,7 @@ const Avataaars = {
     let noseType = this.paths.nose.default;
     let skinType = this.paths.skin.default;
     let skinColor = this._getColor('skin', options.skin);
-    let [topType, topTypeIsHat, topTypeZIndex] = this._getTopType(options.top);
+    let [topType, , topTypeZIndex] = this._getTopType(options.top);
     let facialHairType = this._getShape('facialHair', options.facialHair);
     let facialHairColor = this._getColor('hair', options.facialHairColor);
     let clotheType = this._getShape('clothing', options.clothing);
@@ -68,7 +68,7 @@ const Avataaars = {
       // Create random id for the mask, solves bug in rerendering and cutting of half of the image on Firefox
       let mask_id = Math.random().toString(36).substring(7);
       content = `
-        ${ (options.svgBackground)? `<path fill="${(options.svgBackground == true)? "#fff" : options.svgBackground}" d="M0 0h280v280H0z"/>` : ""}
+        ${ (options.svgBackground)? `<path fill="${(options.svgBackground === true)? "#fff" : options.svgBackground}" d="M0 0h280v280H0z"/>` : ""}
         <path d="M260 160c0 66.274-53.726 120-120 120S20 226.274 20 160 73.726 40 140 40s120 53.726 120 120z" fill="${(_a = options.background) !== null && _a !== void 0 ? _a : this.colors.palette.blue01}"/>
         <mask id="${mask_id}" maskUnits="userSpaceOnUse" x="8" y="0" width="264" height="280">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M272 0H8v160h12c0 66.274 53.726 120 120 120s120-53.726 120-120h12V0z" fill="#fff"/>
@@ -80,7 +80,7 @@ const Avataaars = {
     }
     else if (options.svgBackground) {
         content = `
-      <path fill="${(options.svgBackground == true)? "#fff" : options.svgBackground}" d="M0 0h280v280H0z"/>
+      <path fill="${(options.svgBackground === true)? "#fff" : options.svgBackground}" d="M0 0h280v280H0z"/>
       ${content}
     `;
     }

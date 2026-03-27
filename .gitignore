@@ -22,5 +22,21 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-#key 
+#key
 .env
+
+# Python backend
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/services/__pycache__/
+backend/*.pyc
+backend/*.db
+backend/*.sqlite
+backend/*.log
+*.pyc
+__pycache__/
+
+# Logs
+*.log
+backend.log

@@ -1,27 +1,24 @@
 // src/App.js
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// Outfit Recommendation System with Python backend
+import React, { useState, useEffect, useCallback } from 'react';
 import './style.css';
 import WeatherHeader from './components/WeatherHeader';
 import Avatar from './components/Avatar';
 import Recommendations from './components/Recommendations';
 import Forecast from './components/Forecast';
 import AvatarCustomizationModal from './components/AvatarCustomizationModal';
-import { WeatherPatternAnalyzer } from './services/weatherPatternAnalyzer';
-import { MLRecommendationEngine } from './services/mlRecommendationEngine';
-import { UserPreferenceLearning } from './services/userPreferenceLearning';
+import apiService from './services/apiService';
 import { AvatarOutfitMapper } from './services/avatarOutfitMapper';
 import { suggestClothing, getAvatarOutfit } from './utils/clothingRecommendations';
 import { convertTemperature } from './utils/weatherUtils';
-
-const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
 
 function App() {
   // Weather state
   const [weather, setWeather] = useState(null);
 
-  // Temperature Conversion Function 
+  // Temperature Conversion Function
   const [tempUnit, setTempUnit] = useState('C');
-  
+
   // Simple UI state for messages/errors
   const [status, setStatus] = useState('init'); // 'init' | 'locating' | 'ready' | 'error'
   const [errorMsg, setErrorMsg] = useState('');
@@ -55,97 +52,91 @@ function App() {
   // Modal state
   const [showModal, setShowModal] = useState(false);
 
-  // ML services (using refs to persist across renders)
-  const weatherAnalyzer = useRef(null);
-  const mlEngine = useRef(null);
-  const learningSystem = useRef(null);
-
-  // Initialize ML services
+  // Check backend health on mount
   useEffect(() => {
-    if (!weatherAnalyzer.current) {
-      weatherAnalyzer.current = new WeatherPatternAnalyzer();
-      mlEngine.current = new MLRecommendationEngine();
-      learningSystem.current = new UserPreferenceLearning(mlEngine.current);
-    }
+    apiService.healthCheck()
+      .then(response => {
+        console.log('Backend connected:', response);
+      })
+      .catch(error => {
+        console.warn('Backend not available, some features may be limited:', error);
+      });
   }, []);
-
 
   // Fetch weather for given coords
   const fetchWeather = useCallback(async (lat, lon) => {
     try {
       setStatus('locating');
 
-      const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-      const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+      // Call Python backend for weather data
+      const weatherData = await apiService.fetchWeather(lat, lon);
 
-      const [currentRes, forecastRes] = await Promise.all([
-        fetch(currentUrl),
-        fetch(forecastUrl),
-      ]);
-
-      if (!currentRes.ok) {
-        throw new Error(`Weather error: ${currentRes.status}`);
-      }
-      if (!forecastRes.ok) {
-        throw new Error(`Forecast error: ${forecastRes.status}`);
-      }
-
-      const currentData = await currentRes.json();
-      const forecastData = await forecastRes.json();
-
-      // Process forecast into daily buckets
-      const daily = {};
-      (forecastData.list || []).forEach(item => {
-        const date = new Date(item.dt * 1000);
-        const key = date.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
-        if (!daily[key]) daily[key] = { temps: [], conditions: {} };
-        daily[key].temps.push(item.main.temp);
-        const cond = item.weather?.[0]?.main || 'Clear';
-        daily[key].conditions[cond] = (daily[key].conditions[cond] || 0) + 1;
-      });
-
+      // Process forecast into daily buckets (same as before)
       const forecast = [];
-      let i = 0;
-      for (const key in daily) {
-        if (i >= 4) break;
-        const temps = daily[key].temps;
-        const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
-        const mostCond = Object.entries(daily[key].conditions).sort((a, b) => b[1] - a[1])[0][0];
-        forecast.push({
-          day: i === 0 ? 'Today' : key.split(',')[0], // short weekday
-          temp: Math.round(avgTemp),
-          condition: mostCond,
+      if (weatherData.forecast && weatherData.forecast.length > 0) {
+        const daily = {};
+        weatherData.forecast.forEach(item => {
+          const date = new Date(item.dt * 1000);
+          const key = date.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+          if (!daily[key]) daily[key] = { temps: [], conditions: {} };
+          daily[key].temps.push(item.temp);
+          const cond = item.condition || 'Clear';
+          daily[key].conditions[cond] = (daily[key].conditions[cond] || 0) + 1;
         });
-        i++;
+
+        let i = 0;
+        for (const key in daily) {
+          if (i >= 4) break;
+          const temps = daily[key].temps;
+          const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+          const mostCond = Object.entries(daily[key].conditions).sort((a, b) => b[1] - a[1])[0][0];
+          forecast.push({
+            day: i === 0 ? 'Today' : key.split(',')[0],
+            temp: Math.round(avgTemp),
+            condition: mostCond,
+          });
+          i++;
+        }
       }
 
-      const weatherData = {
-        location: currentData.name || `${lat.toFixed(3)}, ${lon.toFixed(3)}`,
+      const formattedWeather = {
+        location: weatherData.current.location?.name || 'Unknown',
         current: {
-          temperature: Math.round(currentData.main.temp),
-          high: Math.round(currentData.main.temp_max),
-          low: Math.round(currentData.main.temp_min),
-          condition: currentData.weather?.[0]?.main || 'Clear',
-          humidity: currentData.main.humidity,
+          temperature: Math.round(weatherData.current.current.temperature),
+          high: Math.round(weatherData.current.current.temperature + 2), // Approximation
+          low: Math.round(weatherData.current.current.temperature - 2),  // Approximation
+          condition: weatherData.current.current.condition,
+          humidity: weatherData.current.current.humidity,
           wind: {
-            speed: currentData.wind?.speed || 0,
+            speed: weatherData.current.current.wind?.speed || 0,
           },
         },
         forecast,
       };
 
-      setWeather(weatherData);
+      setWeather(formattedWeather);
 
-      // Generate ML-enhanced recommendations
-      if (weatherAnalyzer.current && mlEngine.current) {
-        const analysis = weatherAnalyzer.current.analyzeWeatherData(weatherData, forecast);
-        setWeatherAnalysis(analysis);
+      // Get ML recommendations from Python backend
+      try {
+        const recommendationData = await apiService.getRecommendations(
+          weatherData.current,
+          weatherData.forecast.map(f => ({
+            temp: f.temp,
+            condition: f.condition,
+            description: f.description
+          })),
+          {
+            activityLevel: 0.5,
+            stylePreference: 0.5,
+          }
+        );
 
-        const recommendations = mlEngine.current.generateRecommendations(analysis, {
-          activityLevel: 0.5,
-          stylePreference: 0.5,
-        });
-        setMlRecommendations(recommendations);
+        setMlRecommendations(recommendationData.recommendations);
+        setWeatherAnalysis(recommendationData.weatherAnalysis);
+      } catch (recError) {
+        console.error('Error getting recommendations from backend:', recError);
+        // Fall back to local recommendations if backend fails
+        setMlRecommendations([]);
       }
 
       setStatus('ready');
@@ -153,21 +144,12 @@ function App() {
     } catch (err) {
       console.error(err);
       setStatus('error');
-      setErrorMsg('Failed to load weather. Please try again.');
+      setErrorMsg('Failed to load weather. Please check if the backend is running on port 8000.');
     }
   }, []);
 
   // Request geolocation
   const requestLocation = useCallback(() => {
-    // API key guard
-    if (!API_KEY) {
-      setStatus('error');
-      setErrorMsg(
-        'Missing REACT_APP_WEATHER_API_KEY. Add it to your environment (Vercel: Project Settings → Environment Variables) and redeploy.'
-      );
-      return;
-    }
-
     if (!('geolocation' in navigator)) {
       setStatus('error');
       setErrorMsg('Geolocation is not supported in this browser.');
@@ -259,12 +241,12 @@ function App() {
     style: 'transparent',
   };
 
-  // Handler for user feedback on recommendations
-  const handleFeedback = (item, feedbackType) => {
-    if (learningSystem.current) {
-      const recommendation = mlRecommendations.find(rec => rec.item === item);
-      if (recommendation) {
-        learningSystem.current.recordFeedback(
+  // Handler for user feedback on recommendations - sends to Python backend
+  const handleFeedback = async (item, feedbackType) => {
+    const recommendation = mlRecommendations.find(rec => rec.item === item);
+    if (recommendation) {
+      try {
+        await apiService.recordFeedback(
           recommendation,
           feedbackType,
           {
@@ -273,6 +255,9 @@ function App() {
             timeOfDay: new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening',
           }
         );
+        console.log('Feedback recorded successfully');
+      } catch (error) {
+        console.error('Error recording feedback:', error);
       }
     }
   };
@@ -296,8 +281,8 @@ function App() {
         ⚙️ Customize Avatar
       </button>
       <button className="customize-btn" style={{top: '70px'}} onClick={() => setTempUnit(tempUnit === 'C' ? 'F' : 'C')}>
-        °{tempUnit === 'C' ? 'F' : 'C'} 
-      </button> 
+        °{tempUnit === 'C' ? 'F' : 'C'}
+      </button>
 
       <WeatherHeader location={weather.location} current={weather.current} convertTemp={convertTemp} unit={tempUnit} />
       <Avatar config={avatarOptions} />

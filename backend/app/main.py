@@ -10,12 +10,12 @@ from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
+load_dotenv()
+
 from app.database import init_db, get_db, User, FeedbackHistory, ModelWeights, WeatherHistory
 from app.services.ml_recommendation_engine import MLRecommendationEngine
 from app.services.weather_pattern_analyzer import WeatherPatternAnalyzer
 from app.services.user_preference_learning import UserPreferenceLearning
-
-load_dotenv()
 
 app = FastAPI(title="Outfit Recommendation API", version="1.0.0")
 

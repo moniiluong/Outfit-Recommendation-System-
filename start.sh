@@ -62,16 +62,25 @@ uvicorn app.main:app --reload > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 
-# Wait for backend to start
-sleep 3
+# Wait for backend to become reachable
+BACKEND_READY=0
+for _ in {1..15}; do
+    if curl -sf http://localhost:8000/ > /dev/null; then
+        BACKEND_READY=1
+        break
+    fi
+    sleep 1
+done
 
-# Check if backend started successfully
-if ps -p $BACKEND_PID > /dev/null; then
-    echo "✅ Backend started successfully (PID: $BACKEND_PID)"
-else
-    echo "❌ Backend failed to start. Check backend.log for errors."
+if [ "$BACKEND_READY" -ne 1 ]; then
+    echo "❌ Backend failed to become ready. Check backend.log for errors."
+    if ps -p $BACKEND_PID > /dev/null; then
+        kill $BACKEND_PID
+    fi
     exit 1
 fi
+
+echo "✅ Backend started successfully (PID: $BACKEND_PID)"
 
 # Start frontend
 echo "⚛️  Starting React frontend on port 3000..."

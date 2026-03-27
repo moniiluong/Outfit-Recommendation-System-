@@ -1,12 +1,12 @@
 # Outfit Recommendation System
 
-Weather-based outfit recommendations with a React frontend and a FastAPI backend. The backend handles weather fetching, recommendation generation, feedback learning, and SQLite persistence.
+Weather-based outfit recommendations with a React frontend and a FastAPI backend. The backend handles weather fetching, recommendation generation, feedback learning, and Postgres persistence.
 
 ## Stack
 
 - React frontend in `src/`
 - FastAPI backend in `backend/app/`
-- SQLite database for user feedback and model weights
+- Postgres database for user feedback and model weights
 - OpenWeatherMap for current weather and forecast data
 
 ## Project Structure
@@ -40,6 +40,7 @@ cp .env.example .env
 ```
 
 Set `REACT_APP_WEATHER_API_KEY` in `backend/.env`.
+Set `DATABASE_URL` in `backend/.env` to your Postgres connection string.
 
 ### 2. Frontend
 
@@ -72,6 +73,12 @@ Start the frontend in another terminal:
 npm start
 ```
 
+Or start both with one command:
+
+```bash
+npm run dev
+```
+
 You can also use `./start.sh` on macOS/Linux or `start.bat` on Windows.
 
 ## Main Endpoints
@@ -89,21 +96,5 @@ Swagger UI is available at `http://localhost:8000/docs`.
 ## Notes
 
 - Recommendation quality improves after the user provides feedback.
-- The backend stores feedback, weather history, and learned weights in SQLite.
-- Backend-specific details remain in `backend/README.md`.
-
-## Deploy Backend on Render
-
-This repo includes `render.yaml` for the FastAPI backend.
-
-Required backend environment variables:
-
-- `REACT_APP_WEATHER_API_KEY`
-- `ALLOWED_ORIGINS` set to your frontend URL, for example `https://your-app.vercel.app`
-- `DATABASE_URL` can use the Render disk path from `render.yaml`
-
-After Render creates the backend service, copy its public URL into your Vercel frontend env as:
-
-```env
-REACT_APP_API_URL=https://your-render-service.onrender.com
-```
+- The backend stores feedback, weather history, and learned weights in Postgres.
+- Generated local artifacts such as `build/`, `backend.log`, `backend/venv/`, and old local `.db` files are not part of the source code and can be recreated when needed.

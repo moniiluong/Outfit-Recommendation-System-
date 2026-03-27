@@ -91,3 +91,19 @@ Swagger UI is available at `http://localhost:8000/docs`.
 - Recommendation quality improves after the user provides feedback.
 - The backend stores feedback, weather history, and learned weights in SQLite.
 - Backend-specific details remain in `backend/README.md`.
+
+## Deploy Backend on Render
+
+This repo includes `render.yaml` for the FastAPI backend.
+
+Required backend environment variables:
+
+- `REACT_APP_WEATHER_API_KEY`
+- `ALLOWED_ORIGINS` set to your frontend URL, for example `https://your-app.vercel.app`
+- `DATABASE_URL` can use the Render disk path from `render.yaml`
+
+After Render creates the backend service, copy its public URL into your Vercel frontend env as:
+
+```env
+REACT_APP_API_URL=https://your-render-service.onrender.com
+```

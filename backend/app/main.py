@@ -19,10 +19,19 @@ load_dotenv()
 
 app = FastAPI(title="Outfit Recommendation API", version="1.0.0")
 
+
+def get_allowed_origins() -> List[str]:
+    """Load allowed frontend origins from env for local and deployed clients."""
+    raw_origins = os.getenv("ALLOWED_ORIGINS")
+    if raw_origins:
+        return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+    return ["http://localhost:3000", "http://localhost:3001"]
+
 # CORS middleware for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

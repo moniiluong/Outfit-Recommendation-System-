@@ -26,7 +26,7 @@ def get_allowed_origins() -> List[str]:
     if raw_origins:
         return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
-    return ["http://localhost:3000", "http://localhost:3001"]
+    return ["http://localhost:3000", "http://localhost:3001", "https://outfit-recommendation-system.vercel.app"]
 
 # CORS middleware for React frontend
 app.add_middleware(

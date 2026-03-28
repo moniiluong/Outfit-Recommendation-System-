@@ -1,6 +1,6 @@
 # Outfit Recommendation System
 
-Weather-based outfit recommendations with a React frontend and a FastAPI backend. The backend handles weather fetching, recommendation generation, feedback learning, and Postgres persistence.
+Weather-based outfit recommendations with a React frontend and a FastAPI backend. The backend handles weather fetching, recommendation generation, feedback learning, and Postgres persistence. The repo is now structured to support a single Vercel project with Python API functions.
 
 ## Stack
 
@@ -14,8 +14,10 @@ Weather-based outfit recommendations with a React frontend and a FastAPI backend
 ```text
 .
 ├── backend/              # FastAPI app, database, ML services
+├── api/                  # Vercel Python entrypoint
 ├── public/               # Static assets
 ├── src/                  # React app
+├── requirements.txt      # Root Python deps for Vercel
 ├── start.sh              # Unix startup helper
 ├── start.bat             # Windows startup helper
 └── README.md
@@ -98,3 +100,19 @@ Swagger UI is available at `http://localhost:8000/docs`.
 - Recommendation quality improves after the user provides feedback.
 - The backend stores feedback, weather history, and learned weights in Postgres.
 - Generated local artifacts such as `build/`, `backend.log`, `backend/venv/`, and old local `.db` files are not part of the source code and can be recreated when needed.
+
+## Vercel Deployment
+
+For a single-project Vercel deployment:
+
+- keep the frontend and backend in the same repo
+- Vercel will build the React app from the root project
+- the FastAPI backend is exposed through `api/index.py`
+
+Set these Vercel environment variables:
+
+- `DATABASE_URL`
+- `REACT_APP_WEATHER_API_KEY`
+- `ALLOWED_ORIGINS=https://your-vercel-app.vercel.app`
+
+`REACT_APP_API_URL` is optional for same-project deployment. If unset, the frontend uses the local backend in development and `/api` in production.

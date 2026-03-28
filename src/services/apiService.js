@@ -12,11 +12,7 @@ const getApiBaseUrl = () => {
     return 'http://localhost:8000';
   }
 
-  if (typeof window !== 'undefined') {
-    return window.location.origin;
-  }
-
-  return 'http://localhost:8000';
+  return '/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -44,7 +40,7 @@ class APIService {
    */
   async fetchWeather(lat, lon) {
     try {
-      const response = await fetch(`${this.baseUrl}/api/weather`, {
+      const response = await fetch(`${this.baseUrl}/weather`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +68,7 @@ class APIService {
    */
   async getRecommendations(currentWeather, forecast, userContext = {}) {
     try {
-      const response = await fetch(`${this.baseUrl}/api/recommendations`, {
+      const response = await fetch(`${this.baseUrl}/recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +97,7 @@ class APIService {
    */
   async recordFeedback(recommendation, feedback, weatherContext) {
     try {
-      const response = await fetch(`${this.baseUrl}/api/feedback`, {
+      const response = await fetch(`${this.baseUrl}/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +126,7 @@ class APIService {
    */
   async getUserInsights() {
     try {
-      const response = await fetch(`${this.baseUrl}/api/user/insights`, {
+      const response = await fetch(`${this.baseUrl}/user/insights`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +152,7 @@ class APIService {
    */
   async exportUserData() {
     try {
-      const response = await fetch(`${this.baseUrl}/api/user/export`, {
+      const response = await fetch(`${this.baseUrl}/user/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,7 +178,7 @@ class APIService {
    */
   async clearUserData() {
     try {
-      const response = await fetch(`${this.baseUrl}/api/user/clear`, {
+      const response = await fetch(`${this.baseUrl}/user/clear`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

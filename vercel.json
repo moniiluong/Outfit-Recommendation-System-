@@ -5,8 +5,8 @@
   "outputDirectory": "build",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/backend/app/main.py"
+      "source": "/api/:path*",
+      "destination": "/api/index.py"
     }
   ]
 }

@@ -118,13 +118,13 @@ async def startup_event():
     await init_db()
 
 
-@app.get("/")
+@app.get("/api/")
 async def root():
     """Health check endpoint"""
     return {"status": "ok", "message": "Outfit Recommendation API is running"}
 
 
-@app.post("/weather")
+@app.post("/api/weather")
 async def get_weather(request: WeatherRequest, db: Session = Depends(get_db)):
     """
     Fetch weather data from OpenWeatherMap API
@@ -200,7 +200,7 @@ async def get_weather(request: WeatherRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=502, detail=f"Weather API error: {str(e)}")
 
 
-@app.post("/recommendations")
+@app.post("/api/recommendations")
 async def get_recommendations(request: RecommendationRequest, db: Session = Depends(get_db)):
     """
     Generate outfit recommendations based on weather analysis
@@ -260,7 +260,7 @@ async def get_recommendations(request: RecommendationRequest, db: Session = Depe
         raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
 
 
-@app.post("/feedback")
+@app.post("/api/feedback")
 async def record_feedback(request: FeedbackRequest, db: Session = Depends(get_db)):
     """
     Record user feedback on a recommendation
@@ -350,7 +350,7 @@ async def record_feedback(request: FeedbackRequest, db: Session = Depends(get_db
         raise HTTPException(status_code=500, detail=f"Feedback error: {str(e)}")
 
 
-@app.post("/user/insights")
+@app.post("/api/user/insights")
 async def get_user_insights(request: UserDataExport, db: Session = Depends(get_db)):
     """
     Get personalized insights for a user
@@ -389,7 +389,7 @@ async def get_user_insights(request: UserDataExport, db: Session = Depends(get_d
         raise HTTPException(status_code=500, detail=f"Insights error: {str(e)}")
 
 
-@app.post("/user/export")
+@app.post("/api/user/export")
 async def export_user_data(request: UserDataExport, db: Session = Depends(get_db)):
     """
     Export user data for backup
@@ -414,7 +414,7 @@ async def export_user_data(request: UserDataExport, db: Session = Depends(get_db
         raise HTTPException(status_code=500, detail=f"Export error: {str(e)}")
 
 
-@app.delete("/user/clear")
+@app.delete("/api/user/clear")
 async def clear_user_data(request: UserDataExport, db: Session = Depends(get_db)):
     """
     Clear all user data

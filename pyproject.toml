@@ -1,0 +1,7 @@
+[project]
+name = "outfit-recommendation-system"
+version = "0.1.0"
+description = "React frontend with FastAPI backend for weather-based outfit recommendations"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []

@@ -144,7 +144,7 @@ function App() {
     } catch (err) {
       console.error(err);
       setStatus('error');
-      setErrorMsg('Failed to load weather. Please check if the backend is running on port 8000.');
+      setErrorMsg(err.message || 'Failed to load weather.');
     }
   }, []);
 

@@ -23,6 +23,22 @@ class APIService {
     this.userId = this.getUserId();
   }
 
+  async parseResponse(response, fallbackMessage) {
+    if (response.ok) {
+      return response.json();
+    }
+
+    let detail = '';
+    try {
+      const data = await response.json();
+      detail = data.detail || data.message || '';
+    } catch (error) {
+      detail = '';
+    }
+
+    throw new Error(detail || `${fallbackMessage}: ${response.status}`);
+  }
+
   /**
    * Get or create a unique user ID
    */
@@ -52,11 +68,7 @@ class APIService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Weather API error: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.parseResponse(response, 'Weather API error');
     } catch (error) {
       console.error('Error fetching weather:', error);
       throw error;
@@ -81,11 +93,7 @@ class APIService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Recommendations API error: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.parseResponse(response, 'Recommendations API error');
     } catch (error) {
       console.error('Error getting recommendations:', error);
       throw error;
@@ -110,11 +118,7 @@ class APIService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Feedback API error: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.parseResponse(response, 'Feedback API error');
     } catch (error) {
       console.error('Error recording feedback:', error);
       throw error;
@@ -136,11 +140,7 @@ class APIService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Insights API error: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.parseResponse(response, 'Insights API error');
     } catch (error) {
       console.error('Error getting insights:', error);
       throw error;
@@ -162,11 +162,7 @@ class APIService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Export API error: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.parseResponse(response, 'Export API error');
     } catch (error) {
       console.error('Error exporting user data:', error);
       throw error;
@@ -188,11 +184,7 @@ class APIService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Clear data API error: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await this.parseResponse(response, 'Clear data API error');
     } catch (error) {
       console.error('Error clearing user data:', error);
       throw error;
@@ -205,10 +197,7 @@ class APIService {
   async healthCheck() {
     try {
       const response = await fetch(`${this.baseUrl}/`);
-      if (!response.ok) {
-        throw new Error('Backend is not responding');
-      }
-      return await response.json();
+      return await this.parseResponse(response, 'Backend is not responding');
     } catch (error) {
       console.error('Backend health check failed:', error);
       throw error;

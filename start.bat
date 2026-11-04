@@ -40,7 +40,6 @@ if not exist "backend\.env" (
 REM Check if frontend .env exists
 if not exist ".env" (
     echo Frontend .env file not found. Please create it with:
-    echo    REACT_APP_WEATHER_API_KEY=your_key_here
     echo    REACT_APP_API_URL=http://localhost:8000
 )
 

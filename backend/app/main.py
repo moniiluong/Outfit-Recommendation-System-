@@ -63,11 +63,6 @@ class UserDataExport(BaseModel):
     user_id: str = "default_user"
 
 
-class UserDataImport(BaseModel):
-    user_id: str = "default_user"
-    data: Dict[str, Any]
-
-
 def build_user_profile(user: Optional[User]) -> Dict[str, Any]:
     """Build the ML user profile shape expected by backend services."""
     if not user:

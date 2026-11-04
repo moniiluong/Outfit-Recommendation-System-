@@ -1,6 +1,26 @@
 # Outfit Recommendation System
 
-Weather-based outfit recommendations with a React frontend and a FastAPI backend. The backend handles weather fetching, recommendation generation, feedback learning, and Postgres persistence. The repo is now structured to support a single Vercel project with Python API functions.
+Thread is a wardrobe-first outfit dashboard with a React frontend and a FastAPI weather backend. Add photos of your own clothes, label their category and warmth, and put together an outfit for the current conditions.
+
+## Wardrobe experience
+
+- Upload JPG, PNG, or WebP clothing photos up to 8 MB; photos are resized before storage.
+- Organize and search tops, bottoms, outerwear, shoes, and accessories.
+- Generate weather-based outfit boards using your uploaded pieces, with guidance for missing layers and rain protection.
+- Save and delete looks, and switch between Celsius and Fahrenheit.
+- Clothing photos and saved looks persist in IndexedDB in the current browser. They do not sync to a server or other devices. Clearing site data removes them.
+- First-time visitors see a labeled sample wardrobe and example weather. The first clothing upload switches to the personal wardrobe. Select **Use my location** to fetch live weather. Location or weather errors keep the rest of the app usable.
+
+Outfit matching currently uses local rules based on the clothing details you enter, temperature, and rain. Automatic photo recognition, pixel-art generation, and AI image generation are future features; no AI image service is connected. The previous backend recommendation and feedback endpoints remain available but are not used by this wardrobe flow.
+
+## Quick preview
+
+```bash
+npm install
+npm start
+```
+
+The dashboard, sample wardrobe, photo uploads, and saved outfits work without a backend. Live weather requires the backend setup below, including Postgres and an OpenWeatherMap key.
 
 ## Stack
 
@@ -52,11 +72,10 @@ From the project root:
 npm install
 ```
 
-Create `.env` in the project root:
+Optionally create `.env` in the project root to override the default backend address. The OpenWeatherMap key belongs only in `backend/.env`:
 
 ```env
 REACT_APP_API_URL=http://localhost:8000
-REACT_APP_WEATHER_API_KEY=your_openweathermap_api_key
 ```
 
 ## Run
@@ -85,7 +104,7 @@ You can also use `./start.sh` on macOS/Linux or `start.bat` on Windows.
 
 ## Main Endpoints
 
-- `GET /` health check
+- `GET /api/` health check
 - `POST /api/weather`
 - `POST /api/recommendations`
 - `POST /api/feedback`
@@ -97,8 +116,10 @@ Swagger UI is available at `http://localhost:8000/docs`.
 
 ## Notes
 
-- Recommendation quality improves after the user provides feedback.
-- The backend stores feedback, weather history, and learned weights in Postgres.
+- Wardrobe recommendations use `src/data/wardrobe.js`; photo storage is local to the browser.
+- The legacy backend learning services store feedback, weather history, and learned weights in Postgres.
+- Local and deployed API requests use the `/api` prefix. `REACT_APP_API_URL` accepts an origin with or without `/api`.
+- Verify the frontend with `CI=true npm test -- --watchAll=false --runInBand` and `npm run build`.
 - Generated local artifacts such as `build/`, `backend.log`, `backend/venv/`, and old local `.db` files are not part of the source code and can be recreated when needed.
 
 ## Vercel Deployment

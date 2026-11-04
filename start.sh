@@ -39,7 +39,6 @@ fi
 # Check if frontend .env exists
 if [ ! -f ".env" ]; then
     echo "⚠️  Frontend .env file not found. Please create it with:"
-    echo "   REACT_APP_WEATHER_API_KEY=your_key_here"
     echo "   REACT_APP_API_URL=http://localhost:8000"
 fi
 
@@ -65,7 +64,7 @@ cd ..
 # Wait for backend to become reachable
 BACKEND_READY=0
 for _ in {1..15}; do
-    if curl -sf http://localhost:8000/ > /dev/null; then
+    if curl -sf http://localhost:8000/api/ > /dev/null; then
         BACKEND_READY=1
         break
     fi

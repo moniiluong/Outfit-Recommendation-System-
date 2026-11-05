@@ -20,7 +20,7 @@ npm install
 npm start
 ```
 
-The dashboard, sample wardrobe, photo uploads, and saved outfits work without a backend. Live weather requires the backend setup below, including Postgres and an OpenWeatherMap key.
+The dashboard, sample wardrobe, photo uploads, and saved outfits work without a backend. Live weather requires the backend and an OpenWeatherMap key. Postgres is only needed for the legacy recommendation and feedback endpoints; it does not block weather or backend startup.
 
 ## Stack
 
@@ -62,7 +62,8 @@ cp .env.example .env
 ```
 
 Set `REACT_APP_WEATHER_API_KEY` in `backend/.env`.
-Set `DATABASE_URL` in `backend/.env` to your Postgres connection string.
+Restart the backend after changing the key; Python file reloading does not reload `.env` changes.
+For the legacy recommendation and feedback endpoints, also set `DATABASE_URL` in `backend/.env` to your Postgres connection string. The database connects on the first request to one of those endpoints.
 
 ### 2. Frontend
 

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 load_dotenv()
 
-from app.database import init_db, get_db, User, FeedbackHistory, ModelWeights, WeatherHistory
+from app.database import get_db, User, FeedbackHistory, ModelWeights, WeatherHistory
 from app.services.ml_recommendation_engine import MLRecommendationEngine
 from app.services.weather_pattern_analyzer import WeatherPatternAnalyzer
 from app.services.user_preference_learning import UserPreferenceLearning
@@ -26,7 +26,7 @@ def get_allowed_origins() -> List[str]:
     if raw_origins:
         return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
-    return ["http://localhost:3000", "http://localhost:3001", "https://outfit-recommendation-system.vercel.app"]
+    return ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "https://outfit-recommendation-system.vercel.app"]
 
 # CORS middleware for React frontend
 app.add_middleware(
@@ -107,12 +107,6 @@ def serialize_feedback_records(feedback_records: List[FeedbackHistory]) -> List[
     ]
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database on startup"""
-    await init_db()
-
-
 @app.get("/api/")
 async def root():
     """Health check endpoint"""
@@ -120,13 +114,13 @@ async def root():
 
 
 @app.post("/api/weather")
-async def get_weather(request: WeatherRequest, db: Session = Depends(get_db)):
+async def get_weather(request: WeatherRequest):
     """
     Fetch weather data from OpenWeatherMap API
     """
     api_key = os.getenv("REACT_APP_WEATHER_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="Weather API key not configured")
+        raise HTTPException(status_code=500, detail="The backend weather API key is not configured. Configure it and restart the backend.")
 
     try:
         async with httpx.AsyncClient() as client:
@@ -191,8 +185,19 @@ async def get_weather(request: WeatherRequest, db: Session = Depends(get_db)):
             "forecast": formatted_forecast
         }
 
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Weather API error: {str(e)}")
+    except httpx.HTTPStatusError as e:
+        # Exception strings include the request URL and its API key.
+        if e.response.status_code in (401, 403):
+            detail = "OpenWeather rejected the weather API key. Check the backend configuration and restart the backend."
+        elif e.response.status_code == 429:
+            detail = "OpenWeather's request limit was reached. Please try again later."
+        else:
+            detail = "OpenWeather is unavailable. Please try again later."
+        raise HTTPException(status_code=502, detail=detail) from None
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="OpenWeather took too long to respond. Please try again.") from None
+    except httpx.RequestError:
+        raise HTTPException(status_code=502, detail="The backend could not connect to OpenWeather. Check the server's internet connection and try again.") from None
 
 
 @app.post("/api/recommendations")

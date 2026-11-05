@@ -146,11 +146,11 @@ function App() {
           setVariation(0);
           setWeatherStatus('');
           toast('Weather updated for your location.');
-        } catch {
+        } catch (error) {
           if (requestId === weatherRequest.current) {
             setWeatherStatus('');
             setWeatherError(
-              'Live weather couldn’t load. Check the backend and weather API key, then try again. Your wardrobe is still available.'
+              `${error.message || 'Live weather couldn’t load. Please try again.'} Your wardrobe is still available.`
             );
           }
         }

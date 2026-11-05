@@ -7,7 +7,10 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+from threading import Lock
 import os
+from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
 Base = declarative_base()
 
@@ -70,6 +73,7 @@ class WeatherHistory(Base):
 # Database session management
 engine = None
 SessionLocal = None
+_init_lock = Lock()
 
 
 def normalize_database_url(database_url: str) -> str:
@@ -98,7 +102,7 @@ def normalize_database_url(database_url: str) -> str:
     ))
 
 
-async def init_db():
+def init_db():
     """Initialize the database"""
     global engine, SessionLocal
     database_url = os.getenv("DATABASE_URL")
@@ -106,15 +110,28 @@ async def init_db():
         raise RuntimeError("DATABASE_URL is not configured")
 
     normalized_database_url = normalize_database_url(database_url)
-    engine = create_engine(
-        normalized_database_url
-    )
-    Base.metadata.create_all(bind=engine)
+    new_engine = create_engine(normalized_database_url)
+    try:
+        Base.metadata.create_all(bind=new_engine)
+    except Exception:
+        new_engine.dispose()
+        raise
+    engine = new_engine
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():
-    """Get database session"""
+    """Connect only when a route actually needs the database."""
+    if SessionLocal is None:
+        with _init_lock:
+            if SessionLocal is None:
+                try:
+                    init_db()
+                except (RuntimeError, SQLAlchemyError):
+                    raise HTTPException(
+                        status_code=503,
+                        detail="The database is unavailable. Please check the backend database configuration.",
+                    ) from None
     db = SessionLocal()
     try:
         yield db

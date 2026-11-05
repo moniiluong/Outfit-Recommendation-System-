@@ -160,3 +160,20 @@ it('loads live weather and converts display units without changing matching temp
   expect(screen.getByText(/H: 54°/)).toBeInTheDocument();
   expect(screen.getByText('Exploring a sample wardrobe')).toBeInTheDocument();
 });
+
+it('shows the actual weather failure and allows another attempt', async () => {
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: {
+      getCurrentPosition: (success) =>
+        success({ coords: { latitude: 40, longitude: -74 } }),
+    },
+  });
+  getLocalWeather.mockRejectedValue(new Error('OpenWeather is unavailable. Please try again later.'));
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Use my location' }));
+  await screen.findByText(/OpenWeather is unavailable/);
+  expect(screen.getByRole('button', { name: 'Use my location' })).toBeEnabled();
+  expect(screen.getByText('EXAMPLE WEATHER')).toBeInTheDocument();
+  expect(screen.queryByText(/Check the backend and weather API key/)).not.toBeInTheDocument();
+});

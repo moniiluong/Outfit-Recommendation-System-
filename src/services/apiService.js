@@ -37,7 +37,8 @@ class APIService {
     let detail = '';
     try {
       const data = await response.json();
-      detail = data.detail || data.message || '';
+      const message = data.detail || data.message;
+      detail = typeof message === 'string' ? message : '';
     } catch (error) {
       detail = '';
     }
@@ -86,7 +87,12 @@ class APIService {
 
       return await this.parseResponse(response, 'Weather API error');
     } catch (error) {
-      console.error('Error fetching weather:', error);
+      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        throw new Error('The weather request timed out. Please try again.');
+      }
+      if (error instanceof TypeError) {
+        throw new Error('Could not reach the weather server. Please try again later.');
+      }
       throw error;
     }
   }

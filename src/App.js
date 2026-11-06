@@ -747,8 +747,10 @@ function App() {
                 <h2>Storage</h2>
                 <p>
                   Photos and saved looks are stored in this browser using local
-                  device storage. They aren’t uploaded to a server or synced
-                  between devices. Clearing site data removes them.
+                  device storage. New clothing photos are sent to the app’s
+                  backend to clean up their backgrounds before you save them.
+                  Photos aren’t synced between devices. Clearing site data
+                  removes them.
                 </p>
               </div>
               <div>

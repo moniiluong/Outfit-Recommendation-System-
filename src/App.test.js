@@ -10,6 +10,11 @@ import '@testing-library/jest-dom';
 import App from './App';
 import { readWardrobe, writeWardrobe, preparePhoto } from './data/wardrobe';
 import { getLocalWeather } from './services/dashboardWeather';
+import apiService from './services/apiService';
+
+jest.mock('./services/apiService', () => ({
+  prepareGarment: jest.fn(),
+}));
 
 jest.mock('./data/wardrobe', () => ({
   ...jest.requireActual('./data/wardrobe'),
@@ -53,6 +58,11 @@ it('shows explicit samples, keeps navigation usable, and filters wardrobe catego
 
 it('adds a photo and switches from sample pieces to the personal wardrobe', async () => {
   preparePhoto.mockResolvedValue('data:image/webp;base64,test');
+  apiService.prepareGarment.mockResolvedValue({
+    image: 'data:image/png;base64,cleaned',
+    width: 200,
+    height: 300,
+  });
   render(<App />);
   await waitFor(() =>
     expect(
@@ -71,7 +81,7 @@ it('adds a photo and switches from sample pieces to the personal wardrobe', asyn
   await waitFor(() =>
     expect(
       within(dialog).getByAltText(/Your clothing preview/)
-    ).toBeInTheDocument()
+    ).toHaveAttribute('src', 'data:image/png;base64,cleaned')
   );
   fireEvent.change(within(dialog).getByLabelText('Item name'), {
     target: { value: 'My actual shirt' },
@@ -85,7 +95,7 @@ it('adds a photo and switches from sample pieces to the personal wardrobe', asyn
       items: [
         expect.objectContaining({
           name: 'My actual shirt',
-          image: 'data:image/webp;base64,test',
+          image: 'data:image/png;base64,cleaned',
           category: 'Tops',
         }),
       ],

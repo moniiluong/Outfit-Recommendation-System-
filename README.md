@@ -11,7 +11,7 @@ Thread is a wardrobe-first outfit dashboard with a React frontend and a FastAPI 
 - Clothing photos and saved looks persist in IndexedDB in the current browser. They do not sync to a server or other devices. Clearing site data removes them.
 - First-time visitors see a labeled sample wardrobe and example weather. The first clothing upload switches to the personal wardrobe. Select **Use my location** to fetch live weather. Location or weather errors keep the rest of the app usable.
 
-Outfit matching currently uses local rules based on the clothing details you enter, temperature, and rain. Automatic photo recognition, pixel-art generation, and AI image generation are future features; no AI image service is connected. The previous backend recommendation and feedback endpoints remain available but are not used by this wardrobe flow.
+Outfit matching uses local rules based on clothing details, temperature, and rain. New uploads automatically try plain-background cleanup with Pillow on the backend. Preview the transparent clothing cutout, adjust background tolerance, trace an outline for a complex background, or keep the original photo. The selected version appears throughout your wardrobe and saved outfit boards. No image-generation service or model downloads are needed. See [Clothing photo cleanup](docs/clothing-cutouts.md) for behavior and limitations.
 
 ## Quick preview
 
@@ -20,7 +20,7 @@ npm install
 npm start
 ```
 
-The dashboard, sample wardrobe, photo uploads, and saved outfits work without a backend. Live weather requires the backend and an OpenWeatherMap key. Postgres is only needed for the legacy recommendation and feedback endpoints; it does not block weather or backend startup.
+The dashboard, sample wardrobe, original photo uploads, and saved outfits work without a backend. Automatic background cleanup requires the backend; if it is unavailable, you can save the original photo. Live weather also requires the backend and an OpenWeatherMap key. Postgres is only needed for the legacy recommendation and feedback endpoints; it does not block weather or backend startup.
 
 ## Stack
 
@@ -107,6 +107,7 @@ You can also use `./start.sh` on macOS/Linux or `start.bat` on Windows.
 
 - `GET /api/` health check
 - `POST /api/weather`
+- `POST /api/clothing/cutout`
 - `POST /api/recommendations`
 - `POST /api/feedback`
 - `POST /api/user/insights`

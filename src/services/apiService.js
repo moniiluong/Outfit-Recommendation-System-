@@ -91,8 +91,41 @@ class APIService {
         throw new Error('The weather request timed out. Please try again.');
       }
       if (error instanceof TypeError) {
-        throw new Error('Could not reach the weather server. Please try again later.');
+        throw new Error(
+          'Could not reach the weather server. Please try again later.'
+        );
       }
+      throw error;
+    }
+  }
+
+  async prepareGarment(payload, signal) {
+    try {
+      const response = await fetch(`${this.baseUrl}/clothing/cutout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal,
+      });
+      const cutout = await this.parseResponse(
+        response,
+        'The clothing cutout could not be prepared'
+      );
+      if (
+        !cutout.image?.startsWith('data:image/png;base64,') ||
+        !Number.isFinite(cutout.width) ||
+        cutout.width <= 0 ||
+        !Number.isFinite(cutout.height) ||
+        cutout.height <= 0
+      ) {
+        throw new Error('The server did not return a usable clothing cutout.');
+      }
+      return cutout;
+    } catch (error) {
+      if (error instanceof TypeError)
+        throw new Error(
+          'Could not reach the photo cleanup server. You can keep the original photo or try again later.'
+        );
       throw error;
     }
   }

@@ -1,37 +1,113 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from './Icons';
+import GarmentCutoutEditor from './GarmentCutoutEditor';
 import { CATEGORIES, preparePhoto } from '../data/wardrobe';
+import apiService from '../services/apiService';
+
+const defaultSettings = () => ({ trace: false, points: [], tolerance: 24 });
+const settingsKey = (settings) =>
+  JSON.stringify(settings.trace ? settings.points : settings.tolerance);
 
 export default function UploadModal({ onClose, onSave }) {
   const dialog = useRef(null);
   const input = useRef(null);
-  const [photo, setPhoto] = useState('');
+  const requestVersion = useRef(0);
+  const activeRequest = useRef(null);
+  const [original, setOriginal] = useState('');
+  const [cutout, setCutout] = useState(null);
+  const [useCutout, setUseCutout] = useState(false);
+  const [settings, setSettings] = useState(defaultSettings);
+  const [appliedSettings, setAppliedSettings] = useState('');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Tops');
   const [warmth, setWarmth] = useState('Medium');
   const [waterproof, setWaterproof] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [cleanupError, setCleanupError] = useState('');
   const [dragging, setDragging] = useState(false);
+  const busy = reading || cleaning || saving;
+  const dirty = !!cutout && appliedSettings !== settingsKey(settings);
+  const photo = useCutout && cutout ? cutout.image : original;
+
   useEffect(() => {
     dialog.current.showModal();
+    return () => {
+      requestVersion.current += 1;
+      activeRequest.current?.abort();
+    };
   }, []);
-  async function choose(file) {
-    if (!file) return;
-    setBusy(true);
-    setError('');
+
+  async function cleanPhoto(image, options, version) {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    setCleaning(true);
+    setCleanupError('');
     try {
-      setPhoto(await preparePhoto(file));
-      if (!name)
-        setName(file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '));
+      const result = await apiService.prepareGarment(
+        {
+          image,
+          remove_background: true,
+          tolerance: options.tolerance,
+          outline: options.trace ? options.points : [],
+        },
+        controller.signal
+      );
+      if (version !== requestVersion.current) return;
+      setCutout(result);
+      setAppliedSettings(settingsKey(options));
+      setUseCutout(true);
     } catch (err) {
-      setError(err.message);
+      if (version !== requestVersion.current) return;
+      setCleanupError(
+        err.name === 'AbortError'
+          ? 'Photo cleanup timed out. Keep the original photo or try again.'
+          : err.message
+      );
     } finally {
-      setBusy(false);
+      clearTimeout(timeout);
+      if (version === requestVersion.current) setCleaning(false);
     }
   }
+
+  async function choose(file) {
+    if (!file || saving) return;
+    const version = ++requestVersion.current;
+    activeRequest.current?.abort();
+    setReading(true);
+    setCleaning(false);
+    setError('');
+    setCleanupError('');
+    setOriginal('');
+    setCutout(null);
+    setUseCutout(false);
+    setAppliedSettings('');
+    const options = defaultSettings();
+    setSettings(options);
+    try {
+      const image = await preparePhoto(file);
+      if (version !== requestVersion.current) return;
+      setOriginal(image);
+      setName(
+        (current) =>
+          current || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
+      );
+      setReading(false);
+      await cleanPhoto(image, options, version);
+    } catch (err) {
+      if (version === requestVersion.current) setError(err.message);
+    } finally {
+      if (version === requestVersion.current) setReading(false);
+    }
+  }
+
   async function submit(event) {
     event.preventDefault();
+    if (busy || (useCutout && dirty)) return;
     if (!photo) {
       setError('Add a photo of your clothing first.');
       return;
@@ -40,7 +116,7 @@ export default function UploadModal({ onClose, onSave }) {
       setError('Give this piece a name before adding it.');
       return;
     }
-    setBusy(true);
+    setSaving(true);
     setError('');
     try {
       await onSave({
@@ -54,9 +130,10 @@ export default function UploadModal({ onClose, onSave }) {
       onClose();
     } catch (err) {
       setError(err.message);
-      setBusy(false);
+      setSaving(false);
     }
   }
+
   return (
     <dialog
       className="upload-modal"
@@ -69,9 +146,7 @@ export default function UploadModal({ onClose, onSave }) {
     >
       <form onSubmit={submit}>
         <div className="modal-heading">
-          <div>
-            <h2 id="upload-title">Add clothing</h2>
-          </div>
+          <h2 id="upload-title">Add clothing</h2>
           <button
             type="button"
             className="icon-button"
@@ -81,19 +156,23 @@ export default function UploadModal({ onClose, onSave }) {
             <Icon name="close" />
           </button>
         </div>
+        <p className="upload-intro">
+          We’ll try to remove the background so your clothing stands out.
+        </p>
         <button
           type="button"
-          className={`photo-drop ${dragging ? 'dragging' : ''}`}
+          className={`photo-drop ${photo ? 'has-photo' : ''} ${useCutout ? 'cutout-preview' : ''} ${dragging ? 'dragging' : ''}`}
+          disabled={saving}
           onClick={() => input.current.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
+          onDragOver={(event) => {
+            event.preventDefault();
             setDragging(true);
           }}
           onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
+          onDrop={(event) => {
+            event.preventDefault();
             setDragging(false);
-            choose(e.dataTransfer.files[0]);
+            choose(event.dataTransfer.files[0]);
           }}
         >
           {photo ? (
@@ -104,7 +183,7 @@ export default function UploadModal({ onClose, onSave }) {
                 <Icon name="upload" size={26} />
               </span>
               <strong>
-                {busy
+                {reading
                   ? 'Preparing your photo…'
                   : 'Drop your clothing photo here'}
               </strong>
@@ -119,15 +198,89 @@ export default function UploadModal({ onClose, onSave }) {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           aria-label="Clothing photo"
-          onChange={(e) => choose(e.target.files[0])}
+          disabled={saving}
+          onChange={(event) => {
+            choose(event.target.files[0]);
+            event.target.value = '';
+          }}
         />
+        {original && (
+          <div className="photo-cleanup">
+            <p className="cutout-status" role="status">
+              {cleaning
+                ? 'Separating clothing from its background…'
+                : useCutout
+                  ? 'Cutout selected · transparent background'
+                  : 'Original photo selected'}
+            </p>
+            {cutout && (
+              <div className="photo-versions" aria-label="Photo version">
+                <button
+                  type="button"
+                  aria-pressed={useCutout}
+                  disabled={busy}
+                  onClick={() => setUseCutout(true)}
+                >
+                  Clothing cutout
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={!useCutout}
+                  disabled={busy}
+                  onClick={() => setUseCutout(false)}
+                >
+                  Original photo
+                </button>
+              </div>
+            )}
+            {cleanupError && (
+              <div className="cleanup-error" role="alert">
+                <p>{cleanupError}</p>
+                <p>
+                  You can save the original photo, or refine the outline below.
+                </p>
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={
+                    busy || (settings.trace && settings.points.length < 3)
+                  }
+                  onClick={() =>
+                    cleanPhoto(original, settings, ++requestVersion.current)
+                  }
+                >
+                  Try cleanup again
+                </button>
+              </div>
+            )}
+            <details className="cutout-details">
+              <summary>Refine outline</summary>
+              <GarmentCutoutEditor
+                image={original}
+                settings={settings}
+                onChange={setSettings}
+                onApply={() =>
+                  cleanPhoto(original, settings, ++requestVersion.current)
+                }
+                busy={busy}
+                dirty={dirty}
+              />
+            </details>
+            {useCutout && dirty && (
+              <p className="cutout-hint">
+                Apply your outline changes before saving, or select the original
+                photo.
+              </p>
+            )}
+          </div>
+        )}
         <label>
           Item name
           <input
             required
             maxLength={60}
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(event) => setName(event.target.value)}
             placeholder="e.g. My favorite blue sweater"
           />
         </label>
@@ -136,7 +289,7 @@ export default function UploadModal({ onClose, onSave }) {
             Category
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(event) => setCategory(event.target.value)}
             >
               {CATEGORIES.map((value) => (
                 <option key={value}>{value}</option>
@@ -145,7 +298,10 @@ export default function UploadModal({ onClose, onSave }) {
           </label>
           <label>
             Warmth
-            <select value={warmth} onChange={(e) => setWarmth(e.target.value)}>
+            <select
+              value={warmth}
+              onChange={(event) => setWarmth(event.target.value)}
+            >
               {['Light', 'Medium', 'Warm'].map((value) => (
                 <option key={value}>{value}</option>
               ))}
@@ -156,12 +312,13 @@ export default function UploadModal({ onClose, onSave }) {
           <input
             type="checkbox"
             checked={waterproof}
-            onChange={(e) => setWaterproof(e.target.checked)}
+            onChange={(event) => setWaterproof(event.target.checked)}
           />
           Water-resistant / suitable for rain
         </label>
         <p className="privacy-note">
-          <Icon name="info" size={15} /> Photos stay in this browser on this
+          <Icon name="info" size={15} /> Photos are sent to the app’s server for
+          background cleanup. Saved clothing stays in this browser on this
           device.
         </p>
         {error && (
@@ -172,7 +329,7 @@ export default function UploadModal({ onClose, onSave }) {
         <button
           className="button primary full-width"
           type="submit"
-          disabled={busy}
+          disabled={busy || (useCutout && dirty)}
         >
           {busy ? 'Working…' : 'Add clothing'}
           <Icon name="plus" size={18} />

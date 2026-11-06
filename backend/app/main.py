@@ -16,8 +16,10 @@ from app.database import get_db, User, FeedbackHistory, ModelWeights, WeatherHis
 from app.services.ml_recommendation_engine import MLRecommendationEngine
 from app.services.weather_pattern_analyzer import WeatherPatternAnalyzer
 from app.services.user_preference_learning import UserPreferenceLearning
+from app.clothing_cutout import router as cutout_router
 
 app = FastAPI(title="Outfit Recommendation API", version="1.0.0")
+app.include_router(cutout_router)
 
 
 def get_allowed_origins() -> List[str]:

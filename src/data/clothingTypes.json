@@ -1,0 +1,102 @@
+[
+  {
+    "id": "T_SHIRT",
+    "label": "T-shirt",
+    "category": "Tops"
+  },
+  {
+    "id": "SHIRT",
+    "label": "Shirt",
+    "category": "Tops"
+  },
+  {
+    "id": "BLOUSE",
+    "label": "Blouse",
+    "category": "Tops"
+  },
+  {
+    "id": "SWEATER",
+    "label": "Sweater",
+    "category": "Tops"
+  },
+  {
+    "id": "HOODIE",
+    "label": "Hoodie",
+    "category": "Tops"
+  },
+  {
+    "id": "PANTS",
+    "label": "Pants",
+    "category": "Bottoms"
+  },
+  {
+    "id": "JEANS",
+    "label": "Jeans",
+    "category": "Bottoms"
+  },
+  {
+    "id": "SHORTS",
+    "label": "Shorts",
+    "category": "Bottoms"
+  },
+  {
+    "id": "SKIRT",
+    "label": "Skirt",
+    "category": "Bottoms"
+  },
+  {
+    "id": "JACKET",
+    "label": "Jacket",
+    "category": "Outerwear"
+  },
+  {
+    "id": "COAT",
+    "label": "Coat",
+    "category": "Outerwear"
+  },
+  {
+    "id": "VEST",
+    "label": "Vest",
+    "category": "Outerwear"
+  },
+  {
+    "id": "DRESS",
+    "label": "Dress",
+    "category": "Dresses"
+  },
+  {
+    "id": "SHOES",
+    "label": "Shoes",
+    "category": "Shoes"
+  },
+  {
+    "id": "BOOTS",
+    "label": "Boots",
+    "category": "Shoes"
+  },
+  {
+    "id": "SNEAKERS",
+    "label": "Sneakers",
+    "category": "Shoes"
+  },
+  {
+    "id": "SANDALS",
+    "label": "Sandals",
+    "category": "Shoes"
+  },
+  {
+    "id": "ACCESSORY",
+    "label": "Accessory",
+    "category": "Accessories"
+  },
+  {
+    "id": "HAT",
+    "label": "Hat",
+    "category": "Accessories"
+  },
+  {
+    "id": "SCARF",
+    "label": "Scarf",
+    "category": "Accessories"
+  }
+]

@@ -5,13 +5,16 @@ Thread is a wardrobe-first outfit dashboard with a React frontend and a FastAPI 
 ## Wardrobe experience
 
 - Upload JPG, PNG, or WebP clothing photos up to 8 MB; photos are resized before storage.
-- Organize and search tops, bottoms, outerwear, shoes, and accessories.
+- Confirm a suggested clothing type after upload to fill the item name and category, or choose another type. Custom names are preserved.
+- Organize and search tops, bottoms, dresses, outerwear, shoes, and accessories.
 - Generate weather-based outfit boards using your uploaded pieces, with guidance for missing layers and rain protection.
 - Save and delete looks, and switch between Celsius and Fahrenheit.
 - Clothing photos and saved looks persist in IndexedDB in the current browser. They do not sync to a server or other devices. Clearing site data removes them.
 - First-time visitors see a labeled sample wardrobe and example weather. The first clothing upload switches to the personal wardrobe. Select **Use my location** to fetch live weather. Location or weather errors keep the rest of the app usable.
 
-Outfit matching uses local rules based on clothing details, temperature, and rain. New uploads automatically try plain-background cleanup with Pillow on the backend. Preview the transparent clothing cutout, adjust background tolerance, trace an outline for a complex background, or keep the original photo. The selected version appears throughout your wardrobe and saved outfit boards. No image-generation service or model downloads are needed. See [Clothing photo cleanup](docs/clothing-cutouts.md) for behavior and limitations.
+Outfit matching uses local rules based on clothing details, temperature, and rain. New uploads automatically try plain-background cleanup with Pillow on the backend. Preview the transparent clothing cutout, adjust background tolerance, trace an outline for a complex background, or keep the original photo. The selected version appears throughout your wardrobe and saved outfit boards. See [Clothing photo cleanup](docs/clothing-cutouts.md) for behavior and limitations.
+
+Clothing recognition uses the bundled Pasma Small-320 classifier on the backend's CPU, with no paid API, GPU, or browser model download. It suggests one of 20 item types and asks for confirmation before filling details. Uncertain results show alternatives; manual entry remains available. See [Clothing recognition](docs/clothing-recognition.md) for setup, model attribution, and limitations.
 
 ## Quick preview
 
@@ -20,7 +23,7 @@ npm install
 npm start
 ```
 
-The dashboard, sample wardrobe, original photo uploads, and saved outfits work without a backend. Automatic background cleanup requires the backend; if it is unavailable, you can save the original photo. Live weather also requires the backend and an OpenWeatherMap key. Postgres is only needed for the legacy recommendation and feedback endpoints; it does not block weather or backend startup.
+The dashboard, sample wardrobe, original photo uploads, and saved outfits work without a backend. Automatic background cleanup and clothing suggestions require the backend; if it is unavailable, you can save the original photo and enter details manually. Live weather also requires the backend and an OpenWeatherMap key. Postgres is only needed for the legacy recommendation and feedback endpoints; it does not block weather or backend startup.
 
 ## Stack
 
@@ -108,6 +111,7 @@ You can also use `./start.sh` on macOS/Linux or `start.bat` on Windows.
 - `GET /api/` health check
 - `POST /api/weather`
 - `POST /api/clothing/cutout`
+- `POST /api/clothing/recognize`
 - `POST /api/recommendations`
 - `POST /api/feedback`
 - `POST /api/user/insights`

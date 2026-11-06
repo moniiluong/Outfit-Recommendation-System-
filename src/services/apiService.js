@@ -2,6 +2,7 @@
  * API Service for communicating with Python backend
  * Handles all HTTP requests to the FastAPI backend
  */
+import clothingTypes from '../data/clothingTypes.json';
 
 const getApiBaseUrl = () => {
   if (process.env.REACT_APP_API_URL) {
@@ -95,6 +96,48 @@ class APIService {
           'Could not reach the weather server. Please try again later.'
         );
       }
+      throw error;
+    }
+  }
+
+  async recognizeGarment(image, signal) {
+    try {
+      const response = await fetch(`${this.baseUrl}/clothing/recognize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image }),
+        signal,
+      });
+      const result = await this.parseResponse(
+        response,
+        'Could not suggest a clothing type'
+      );
+      if (
+        !['suggested', 'uncertain'].includes(result.status) ||
+        !Array.isArray(result.suggestions) ||
+        result.suggestions.length !== 3 ||
+        new Set(result.suggestions.map((item) => item?.type)).size !== 3 ||
+        result.suggestions.some((item) => {
+          const known = clothingTypes.find((entry) => entry.id === item?.type);
+          return (
+            !known ||
+            item.label !== known.label ||
+            item.category !== known.category ||
+            !Number.isFinite(item.score) ||
+            item.score < 0 ||
+            item.score > 1
+          );
+        })
+      )
+        throw new Error(
+          'The server did not return usable clothing suggestions.'
+        );
+      return result;
+    } catch (error) {
+      if (error instanceof TypeError)
+        throw new Error(
+          'Could not reach clothing recognition. You can choose the type manually.'
+        );
       throw error;
     }
   }

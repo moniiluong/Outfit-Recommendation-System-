@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 HEADERS = {"Cache-Control": "no-store"}
 
 
-class CutoutRoute(APIRoute):
+class PhotoRoute(APIRoute):
     """Keep rejected photo data and nonfinite numbers out of error responses."""
     def get_route_handler(self):
         handler = super().get_route_handler()
@@ -26,13 +26,13 @@ class CutoutRoute(APIRoute):
             except RequestValidationError:
                 return JSONResponse(
                     status_code=422,
-                    content={"detail": "Check the photo size, outline points, and background tolerance, then try again."},
+                    content={"detail": "Check the photo size and processing options, then try again."},
                     headers=HEADERS,
                 )
         return validate_request
 
 
-router = APIRouter(prefix="/api/clothing", tags=["Clothing cutouts"], route_class=CutoutRoute)
+router = APIRouter(prefix="/api/clothing", tags=["Clothing cutouts"], route_class=PhotoRoute)
 
 
 class Settings(BaseModel):
@@ -44,8 +44,11 @@ class Point(Settings):
     y: float = Field(ge=0, le=1)
 
 
-class CutoutRequest(Settings):
+class PhotoRequest(Settings):
     image: str = Field(max_length=2_800_000)
+
+
+class CutoutRequest(PhotoRequest):
     remove_background: bool = True
     tolerance: int = Field(default=24, ge=0, le=80)
     outline: List[Point] = Field(default_factory=list, max_length=80)

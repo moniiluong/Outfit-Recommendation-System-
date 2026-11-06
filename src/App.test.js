@@ -14,6 +14,7 @@ import apiService from './services/apiService';
 
 jest.mock('./services/apiService', () => ({
   prepareGarment: jest.fn(),
+  recognizeGarment: jest.fn(),
 }));
 
 jest.mock('./data/wardrobe', () => ({
@@ -31,6 +32,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   readWardrobe.mockResolvedValue({ items: [], looks: [] });
   writeWardrobe.mockResolvedValue();
+  apiService.recognizeGarment.mockRejectedValue(new Error('Unavailable'));
   HTMLDialogElement.prototype.showModal = jest.fn();
   Object.defineProperty(window, 'crypto', {
     configurable: true,

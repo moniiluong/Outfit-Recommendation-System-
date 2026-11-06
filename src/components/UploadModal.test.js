@@ -15,7 +15,10 @@ jest.mock('../data/wardrobe', () => ({
   ...jest.requireActual('../data/wardrobe'),
   preparePhoto: jest.fn(),
 }));
-jest.mock('../services/apiService', () => ({ prepareGarment: jest.fn() }));
+jest.mock('../services/apiService', () => ({
+  prepareGarment: jest.fn(),
+  recognizeGarment: jest.fn(),
+}));
 
 const original = 'data:image/webp;base64,original';
 const cleaned = 'data:image/png;base64,cleaned';
@@ -40,6 +43,7 @@ beforeEach(() => {
   HTMLDialogElement.prototype.showModal = jest.fn();
   preparePhoto.mockResolvedValue(original);
   apiService.prepareGarment.mockResolvedValue(result);
+  apiService.recognizeGarment.mockRejectedValue(new Error('Unavailable'));
   Object.defineProperty(window, 'crypto', {
     configurable: true,
     value: { randomUUID: () => 'test-uuid' },
@@ -206,4 +210,111 @@ it('cancels cleanup when the upload dialog is unmounted', async () => {
   const signal = apiService.prepareGarment.mock.calls[0][1];
   await act(async () => unmount());
   expect(signal.aborted).toBe(true);
+});
+
+const prediction = {
+  status: 'suggested',
+  suggestions: [
+    { type: 'T_SHIRT', label: 'T-shirt', category: 'Tops', score: 0.8 },
+    { type: 'SHIRT', label: 'Shirt', category: 'Tops', score: 0.15 },
+    { type: 'DRESS', label: 'Dress', category: 'Dresses', score: 0.05 },
+  ],
+};
+
+it('asks for confirmation before filling the detected type, name, and category', async () => {
+  apiService.recognizeGarment.mockResolvedValue(prediction);
+  const save = jest.fn().mockResolvedValue();
+  render(<UploadModal onSave={save} onClose={() => {}} />);
+  upload('IMG_1000.png');
+  await waitFor(() => expect(button('Yes, use T-shirt')).toBeEnabled());
+  expect(screen.getByLabelText('Clothing type')).toHaveValue('');
+  expect(screen.getByLabelText('Item name')).toHaveValue('IMG 1000');
+  fireEvent.click(button('Yes, use T-shirt'));
+  expect(screen.getByLabelText('Clothing type')).toHaveValue('T_SHIRT');
+  expect(screen.getByLabelText('Item name')).toHaveValue('T-shirt');
+  expect(screen.getByLabelText('Category')).toHaveValue('Tops');
+  await ready();
+  fireEvent.click(button('Add clothing'));
+  await waitFor(() =>
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'T-shirt',
+        clothingType: 'T_SHIRT',
+        category: 'Tops',
+        image: cleaned,
+      })
+    )
+  );
+});
+
+it('allows correction of the detected item while preserving a custom name and warmth', async () => {
+  apiService.recognizeGarment.mockResolvedValue(prediction);
+  render(<UploadModal onSave={() => {}} onClose={() => {}} />);
+  upload();
+  await waitFor(() => expect(button('Change item')).toBeEnabled());
+  fireEvent.change(screen.getByLabelText('Item name'), {
+    target: { value: 'Grandma’s gift' },
+  });
+  fireEvent.change(screen.getByLabelText('Warmth'), {
+    target: { value: 'Warm' },
+  });
+  fireEvent.click(button('Change item'));
+  fireEvent.change(screen.getByLabelText('Clothing type'), {
+    target: { value: 'COAT' },
+  });
+  expect(screen.getByLabelText('Category')).toHaveValue('Outerwear');
+  expect(screen.getByLabelText('Item name')).toHaveValue('Grandma’s gift');
+  expect(screen.getByLabelText('Warmth')).toHaveValue('Warm');
+  fireEvent.change(screen.getByLabelText('Category'), {
+    target: { value: 'Bottoms' },
+  });
+  expect(screen.getByLabelText('Clothing type')).toHaveValue('');
+});
+
+it('shows alternatives for uncertain results without automatically selecting an item', async () => {
+  apiService.recognizeGarment.mockResolvedValue({
+    ...prediction,
+    status: 'uncertain',
+  });
+  render(<UploadModal onSave={() => {}} onClose={() => {}} />);
+  upload();
+  await screen.findByText(/Not sure which item/);
+  expect(screen.getByLabelText('Clothing type')).toHaveValue('');
+  fireEvent.click(button('Dress'));
+  expect(screen.getByLabelText('Clothing type')).toHaveValue('DRESS');
+  expect(screen.getByLabelText('Category')).toHaveValue('Dresses');
+});
+
+it('ignores a recognition result for a replaced photo and aborts its request', async () => {
+  let finishFirst;
+  apiService.recognizeGarment
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirst = resolve;
+        })
+    )
+    .mockResolvedValue(prediction);
+  render(<UploadModal onSave={() => {}} onClose={() => {}} />);
+  upload();
+  await waitFor(() =>
+    expect(apiService.recognizeGarment).toHaveBeenCalledTimes(1)
+  );
+  const signal = apiService.recognizeGarment.mock.calls[0][1];
+  preparePhoto.mockResolvedValue('data:image/webp;base64,new');
+  upload('new.png');
+  await waitFor(() => expect(button('Yes, use T-shirt')).toBeEnabled());
+  expect(signal.aborted).toBe(true);
+  await act(async () =>
+    finishFirst({
+      ...prediction,
+      suggestions: [
+        { type: 'COAT', label: 'Coat', category: 'Outerwear', score: 0.9 },
+      ],
+    })
+  );
+  expect(button('Yes, use T-shirt')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Yes, use Coat', hidden: true })
+  ).not.toBeInTheDocument();
 });

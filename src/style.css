@@ -659,6 +659,13 @@ input::placeholder {
   grid-column: 1 / 4;
   grid-row: 1;
 }
+.piece-dresses {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+}
+.piece-dresses .garment-photo {
+  height: 170px;
+}
 .piece-outerwear {
   grid-column: 4 / 7;
   grid-row: 1;
@@ -1114,6 +1121,45 @@ input::placeholder {
   display: grid;
   gap: 12px;
   margin: -6px 0 20px;
+}
+.clothing-recognition {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid #ffffff26;
+  border-radius: 9px;
+  background: #ffffff04;
+  min-width: 0;
+}
+.recognition-message {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d6d6d6;
+}
+.recognition-actions,
+.recognition-alternatives {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.recognition-actions .button {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.recognition-actions .text-button {
+  font-size: 12px;
+}
+.recognition-alternatives button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #ffffff08;
+  padding: 7px 11px;
+  font-size: 12px;
+}
+.upload-modal .clothing-recognition label {
+  margin-bottom: 0;
 }
 .cutout-status {
   font-size: 12px;

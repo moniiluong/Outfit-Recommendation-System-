@@ -1,6 +1,7 @@
 export const CATEGORIES = [
   'Tops',
   'Bottoms',
+  'Dresses',
   'Outerwear',
   'Shoes',
   'Accessories',
@@ -80,7 +81,14 @@ export function buildOutfit(items, weather, variation = 0) {
   const wet = /rain|drizzle|storm|snow/i.test(weather?.condition || '');
   const target =
     temperature < 12 ? 'Warm' : temperature < 22 ? 'Medium' : 'Light';
-  const categories = ['Tops', 'Bottoms', 'Shoes'];
+  const hasDress = items.some((item) => item.category === 'Dresses');
+  const hasSeparates = ['Tops', 'Bottoms'].every((category) =>
+    items.some((item) => item.category === category)
+  );
+  const useDress = hasDress && (!hasSeparates || variation % 2 === 1);
+  const categories = useDress
+    ? ['Dresses', 'Shoes']
+    : ['Tops', 'Bottoms', 'Shoes'];
   if (temperature < 22 || wet) categories.push('Outerwear');
   if (items.some((item) => item.category === 'Accessories'))
     categories.push('Accessories');

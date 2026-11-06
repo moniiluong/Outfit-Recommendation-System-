@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from './Icons';
 import GarmentCutoutEditor from './GarmentCutoutEditor';
+import ClothingRecognition from './ClothingRecognition';
+import clothingTypes from '../data/clothingTypes.json';
 import { CATEGORIES, preparePhoto } from '../data/wardrobe';
 import apiService from '../services/apiService';
 
@@ -13,6 +15,7 @@ export default function UploadModal({ onClose, onSave }) {
   const input = useRef(null);
   const requestVersion = useRef(0);
   const activeRequest = useRef(null);
+  const nameEdited = useRef(false);
   const [original, setOriginal] = useState('');
   const [cutout, setCutout] = useState(null);
   const [useCutout, setUseCutout] = useState(false);
@@ -20,6 +23,7 @@ export default function UploadModal({ onClose, onSave }) {
   const [appliedSettings, setAppliedSettings] = useState('');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Tops');
+  const [clothingType, setClothingType] = useState('');
   const [warmth, setWarmth] = useState('Medium');
   const [waterproof, setWaterproof] = useState(false);
   const [reading, setReading] = useState(false);
@@ -86,22 +90,30 @@ export default function UploadModal({ onClose, onSave }) {
     setCutout(null);
     setUseCutout(false);
     setAppliedSettings('');
+    setClothingType('');
     const options = defaultSettings();
     setSettings(options);
     try {
       const image = await preparePhoto(file);
       if (version !== requestVersion.current) return;
       setOriginal(image);
-      setName(
-        (current) =>
-          current || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
-      );
+      if (!nameEdited.current)
+        setName(file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '));
       setReading(false);
       await cleanPhoto(image, options, version);
     } catch (err) {
       if (version === requestVersion.current) setError(err.message);
     } finally {
       if (version === requestVersion.current) setReading(false);
+    }
+  }
+
+  function chooseType(id) {
+    setClothingType(id);
+    const item = clothingTypes.find((entry) => entry.id === id);
+    if (item) {
+      setCategory(item.category);
+      if (!nameEdited.current) setName(item.label);
     }
   }
 
@@ -123,6 +135,7 @@ export default function UploadModal({ onClose, onSave }) {
         id: crypto.randomUUID(),
         name: name.trim(),
         category,
+        ...(clothingType ? { clothingType } : {}),
         warmth,
         waterproof,
         image: photo,
@@ -274,13 +287,24 @@ export default function UploadModal({ onClose, onSave }) {
             )}
           </div>
         )}
+        {original && (
+          <ClothingRecognition
+            image={original}
+            value={clothingType}
+            onChoose={chooseType}
+            disabled={saving}
+          />
+        )}
         <label>
           Item name
           <input
             required
             maxLength={60}
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => {
+              nameEdited.current = true;
+              setName(event.target.value);
+            }}
             placeholder="e.g. My favorite blue sweater"
           />
         </label>
@@ -289,7 +313,14 @@ export default function UploadModal({ onClose, onSave }) {
             Category
             <select
               value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              onChange={(event) => {
+                const next = event.target.value;
+                setCategory(next);
+                const item = clothingTypes.find(
+                  (entry) => entry.id === clothingType
+                );
+                if (item && item.category !== next) setClothingType('');
+              }}
             >
               {CATEGORIES.map((value) => (
                 <option key={value}>{value}</option>
@@ -318,8 +349,8 @@ export default function UploadModal({ onClose, onSave }) {
         </label>
         <p className="privacy-note">
           <Icon name="info" size={15} /> Photos are sent to the app’s server for
-          background cleanup. Saved clothing stays in this browser on this
-          device.
+          background cleanup and item suggestions. Saved clothing stays in this
+          browser on this device.
         </p>
         {error && (
           <p className="form-error" role="alert">

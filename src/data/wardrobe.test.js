@@ -72,3 +72,32 @@ it('prefers the closest available warmth when the ideal layer is missing', () =>
   ];
   expect(buildOutfit(items, { temperature: 3 }).items[0].id).toBe('thicker');
 });
+
+it('uses a dress as a complete base outfit and still includes shoes and required layers', () => {
+  const dress = { id: 'dress', category: 'Dresses', warmth: 'Light' };
+  const shoes = { id: 'shoes', category: 'Shoes', warmth: 'Light' };
+  const result = buildOutfit([dress, shoes], {
+    temperature: 25,
+    condition: 'Clear',
+  });
+  expect(result.items).toEqual([dress, shoes]);
+  expect(result.missing).toEqual([]);
+  expect(buildOutfit([dress], { temperature: 10 }).missing).toEqual([
+    'Shoes',
+    'Outerwear',
+  ]);
+});
+
+it('can rotate between a dress and available separates', () => {
+  const items = [
+    { id: 'top', category: 'Tops', warmth: 'Light' },
+    { id: 'bottoms', category: 'Bottoms', warmth: 'Light' },
+    { id: 'dress', category: 'Dresses', warmth: 'Light' },
+  ];
+  expect(
+    buildOutfit(items, { temperature: 25 }, 0).items.map((i) => i.id)
+  ).toEqual(['top', 'bottoms']);
+  expect(
+    buildOutfit(items, { temperature: 25 }, 1).items.map((i) => i.id)
+  ).toEqual(['dress']);
+});

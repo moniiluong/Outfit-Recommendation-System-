@@ -48,7 +48,7 @@ The dashboard, sample wardrobe, original photo uploads, and saved outfits work w
 
 ## Prerequisites
 
-- Python 3.8+
+- Python 3.12 for Vercel and matching local deployment checks (existing Python 3.9 development environments use compatible dependency pins)
 - Node.js 14+
 - An OpenWeatherMap API key
 
@@ -135,6 +135,8 @@ For a single-project Vercel deployment:
 - keep the frontend and backend in the same repo
 - Vercel will build the React app from the root project
 - the FastAPI backend is exposed through `api/index.py`
+- `vercel.json` includes the recognition model and excludes frontend, test, documentation, and development files from the Python function; the frontend build is still served normally
+- production image dependencies are pinned in `pyproject.toml` and mirrored in `backend/requirements.txt`; avoid adding `uvicorn[standard]` to the production dependencies, as Vercel supplies its server integration and those optional native packages substantially increase the function size
 
 Set these Vercel environment variables:
 
@@ -143,3 +145,5 @@ Set these Vercel environment variables:
 - `ALLOWED_ORIGINS=https://your-vercel-app.vercel.app`
 
 `REACT_APP_API_URL` is optional for same-project deployment. If unset, the frontend uses the local backend in development and `/api` in production.
+
+After changing deployment dependencies, check the uncompressed Linux package size as described in [Clothing recognition deployment](docs/clothing-recognition.md#vercel-bundle-size). When deploying the bundle-size fix, redeploy once with the existing build cache disabled so the previous dependency set is not reused.

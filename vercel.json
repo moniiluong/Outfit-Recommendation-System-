@@ -5,7 +5,8 @@
   "outputDirectory": "build",
   "functions": {
     "api/index.py": {
-      "includeFiles": "backend/models/pasma/**"
+      "includeFiles": "backend/models/pasma/**",
+      "excludeFiles": "{src/**,public/**,build/**,node_modules/**,docs/**,scripts/**,backend/tests/**,backend/venv/**,**/__pycache__/**,.git/**,.github/**}"
     }
   },
   "rewrites": [

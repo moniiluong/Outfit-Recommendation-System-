@@ -18,6 +18,25 @@ Inputs follow the same embedded still-image size and format limits as photo clea
 
 Photos stay in memory on this app's backend and are not forwarded to Hugging Face or another inference service. Recognition does not persist uploads, results, or training data on the server. The selected clothing image and confirmed details stay in the browser's existing IndexedDB wardrobe.
 
+## Vercel bundle size
+
+The Python function contains native inference, NumPy, Pillow, database libraries, the approximately 20.4 MiB model, and Vercel's runtime. The relevant size is the uncompressed function bundle, not the Git repository size or the compressed wheel downloads.
+
+The production configuration pins ONNX Runtime 1.26.0, NumPy 2.5.4, and Pillow 13.0.0 for Python 3.12. The root `pyproject.toml` and `backend/requirements.txt` must agree for that interpreter. Older local Python versions retain compatible pins. Plain Uvicorn supports the local HTTP server and basic `--reload` without the optional `[standard]` packages (uvloop, httptools, watchfiles, PyYAML, and websockets); those extras are not needed by this app's Vercel function. No inference library, model data, or required shared library is stripped out.
+
+`vercel.json` excludes the frontend source/build, tests, docs, scripts, and local virtual environment from the Python function while explicitly retaining `backend/models/pasma/**`. This does not exclude the frontend from its separate static build.
+
+To audit an updated dependency set, use a clean temporary wheel directory. On Linux x86-64 with Python 3.12:
+
+```bash
+python -m pip download -r backend/requirements.txt --only-binary=:all: --dest /tmp/thread-runtime-wheels
+python scripts/audit_vercel_bundle.py /tmp/thread-runtime-wheels
+```
+
+For cross-platform auditing, resolve dependency markers for Linux x86-64 and Python 3.12 first (for example with `uv pip compile --python-version 3.12 --python-platform x86_64-manylinux_2_28`). Then download those resolved requirements using pip's matching platform/ABI flags and `--no-deps`; pip's platform flags alone do not consistently retarget environment markers. Do not count macOS wheels as the deployment size.
+
+The local audit totals uncompressed wheels and backend/model files, adds a 40 MiB runtime/packaging allowance, and checks the reported 225 MiB deployment budget. It is an estimate, not an actual Vercel build. Keep the model's licenses and notices in the deployment. Commit and push the dependency/configuration changes, then redeploy once with the previous build cache disabled. No new recognition API key or external hosting account is needed.
+
 ## Labels and limitations
 
 Supported types are T-shirt, shirt, blouse, sweater, hoodie, pants, jeans, shorts, skirt, jacket, coat, vest, dress, shoes, boots, sneakers, sandals, accessory, hat, and scarf. Dresses have their own category and can replace tops and bottoms in an outfit. Refreshing can alternate between a dress and separates when both are available.
